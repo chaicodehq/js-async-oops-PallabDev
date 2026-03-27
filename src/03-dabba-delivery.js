@@ -77,29 +77,119 @@
 export class DabbaService {
   constructor(serviceName, area) {
     // Your code here
+    this.serviceName = serviceName;
+    this.area = area;
+    this.customers = [];
+    this._nextId = 1;
   }
 
   addCustomer(name, address, mealPreference) {
     // Your code here
+    let pref = ["veg", "nonveg", "jain"];
+    if (
+      !mealPreference ||
+      typeof mealPreference !== "string" ||
+      !pref.includes(mealPreference)
+    )
+      return null;
+    if (!address || typeof address !== "string") return null;
+    if (
+      !name ||
+      typeof name !== "string" ||
+      this.customers.filter((customer) => customer.name === name).length > 0
+    )
+      return null;
+    const customerObj = {
+      id: this._nextId++,
+      name,
+      address,
+      mealPreference,
+      active: true,
+      delivered: false,
+    };
+    this.customers.push(customerObj);
+    return customerObj;
   }
 
   removeCustomer(name) {
     // Your code here
+    if (!name || typeof name !== "string") return false;
+    let filteredCustomer = this.customers.filter(
+      (customer) => customer.name === name,
+    );
+    if (filteredCustomer.length < 1) return false;
+    if (!filteredCustomer[0].active) return false;
+    filteredCustomer[0].active = false;
+    return true;
   }
 
   createDeliveryBatch() {
     // Your code here
+    let filteredActiveCustomer = this.customers.filter(
+      (customer) => customer.active,
+    );
+    if (filteredActiveCustomer.length < 1) return [];
+    let deliveryBatch = filteredActiveCustomer.map((customer) => {
+      return {
+        customerId: customer.id,
+        name: customer.name,
+        address: customer.address,
+        mealPreference: customer.mealPreference,
+        batchTime: new Date().toISOString(),
+      };
+    });
+    return deliveryBatch;
   }
 
   markDelivered(customerId) {
     // Your code here
+    if (!customerId || isNaN(customerId) || !Number.isInteger(customerId))
+      return false;
+    let filteredCustomer = this.customers.filter(
+      (customer) => customer.id === customerId,
+    );
+    if (filteredCustomer.length < 1) return false;
+    if (filteredCustomer[0].delivered) return false;
+    filteredCustomer[0].delivered = true;
+    return true;
   }
 
   getDailyReport() {
     // Your code here
+    let totalCustomers = this.customers.filter((customer) => customer.active);
+    let delivered = this.customers.filter(
+      (customer) => customer.active && customer.delivered,
+    ).length;
+    let pending = this.customers.filter(
+      (customer) => customer.active && !customer.delivered,
+    ).length;
+    let mealBreakdown = totalCustomers.reduce(
+      (result, customer) => {
+        result[customer.mealPreference] += 1;
+        return result;
+      },
+      {
+        veg: 0,
+        nonveg: 0,
+        jain: 0,
+      },
+    );
+    return {
+      totalCustomers: totalCustomers.length,
+      delivered,
+      pending,
+      mealBreakdown,
+    };
   }
 
   getCustomer(name) {
     // Your code here
+    if (
+      !name ||
+      typeof name !== "string" ||
+      this.customers.filter((customer) => customer.name === name).length < 1
+    )
+      return null;
+    return this.customers.filter((customer) => customer.name === name)[0];
   }
 }

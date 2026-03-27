@@ -93,33 +93,112 @@ export class HaveliSecurity {
 
   constructor(haveliName, passcode, maxResidents) {
     // Your code here
+    this.haveliName = haveliName;
+    this.#passcode = passcode;
+    this.#residents = [];
+    this.#accessLog = [];
+    this.#maxResidents = maxResidents;
   }
 
   addResident(name, role, passcode) {
     // Your code here
+    if (!name || typeof name !== "string") return null;
+    const validRole = ["malik", "naukar", "mehmaan"];
+
+    if (!role || typeof role != "string" || !validRole.includes(role))
+      return { success: false, message: "Invalid role!" };
+
+    if (!passcode || typeof passcode != "string" || passcode !== this.#passcode)
+      return { success: false, message: "Galat passcode!" };
+
+    if (this.#residents.filter((memeber) => memeber.name === name).length > 0)
+      return { success: false, message: "Already a resident!" };
+
+    if (this.#residents.length >= this.#maxResidents)
+      return { success: false, message: "Haveli full hai!" };
+
+    this.#residents.push({
+      name,
+      role,
+      addedAt: new Date().toISOString(),
+    });
+    return { success: true, message: `${name} ab haveli ka ${role} hai!` };
   }
 
   removeResident(name, passcode) {
     // Your code here
+
+    if (!name || typeof name !== "string") return null;
+
+    if (!passcode || typeof passcode != "string" || passcode !== this.#passcode)
+      return { success: false, message: "Galat passcode!" };
+
+    if (this.#residents.filter((member) => member.name === name).length < 1)
+      return { success: false, message: "Resident nahi mila!" };
+
+    this.#residents = this.#residents.filter((member) => member.name !== name);
+
+    return { success: true, message: `${name} ko haveli se nikal diya!` };
   }
 
   verifyAccess(name) {
     // Your code here
+    if (!name || typeof name !== "string") return null;
+    if (this.#residents.filter((member) => member.name === name).length < 1) {
+      this.#accessLog.push({
+        name,
+        time: new Date().toISOString(),
+        allowed: false,
+      });
+      return { allowed: false, message: "Aapka entry allowed nahi hai!" };
+    }
+    this.#accessLog.push({
+      name,
+      time: new Date().toISOString(),
+      allowed: true,
+    });
+    return { allowed: true, message: `Swagat hai ${name}!` };
   }
 
   getAccessLog(passcode) {
     // Your code here
+    if (!passcode || typeof passcode != "string" || passcode !== this.#passcode)
+      return null;
+    return structuredClone(this.#accessLog);
   }
 
   changePasscode(oldPasscode, newPasscode) {
     // Your code here
+    if (
+      !oldPasscode ||
+      typeof oldPasscode != "string" ||
+      oldPasscode !== this.#passcode
+    )
+      return { success: false, message: "Purana passcode galat hai!" };
+    if (
+      !newPasscode ||
+      typeof newPasscode != "string" ||
+      newPasscode.length < 5
+    )
+      return { success: false, message: "Naya passcode bahut chhota hai!" };
+
+    this.#passcode = newPasscode;
+    return { success: true, message: "Passcode badal diya!" };
   }
 
   getResidentCount() {
     // Your code here
+    return this.#residents.length;
   }
 
   isResident(name) {
     // Your code here
+    if (
+      !name ||
+      typeof name !== "string" ||
+      this.#residents.filter((member) => member.name === name).length < 1
+    )
+      return false;
+    return true;
   }
 }

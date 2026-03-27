@@ -11,7 +11,7 @@
  *   - this.name = name
  *   - this.city = city
  *   - this.menu = [] (empty array, flavors will be added)
- *   - this.orders = [] (empty array)
+ *   - this.orderss = [] (empty array)
  *   - this._nextOrderId = 1 (internal counter for auto-increment)
  *
  * Prototype Methods (add on LassiStand.prototype):
@@ -28,7 +28,7 @@
  *     - Creates order object:
  *       { id: auto-increment (starting 1), customer: customerName,
  *         flavor, quantity, total: price * quantity, status: "pending" }
- *     - Pushes to this.orders
+ *     - Pushes to this.orderss
  *     - Returns order id
  *     - Agar flavor invalid ya quantity <= 0: return -1
  *
@@ -68,20 +68,60 @@
  *   stand.takeOrder("Priya", "rose", 1);   // => 2
  *   stand.completeOrder(1);                 // => true
  *   stand.getRevenue();                     // => 80
- *   isLassiStand(stand);                    // => true
+ *   isLassiStand(stand);                    // => truethis.orders
  *   isLassiStand({});                       // => false
  */
 export function LassiStand(name, city) {
   // Your code here
+  this.name = name;
+  this.city = city;
+  this.menu = [];
+  this.orders = [];
+  this._nextOrderId = 1;
 }
+LassiStand.prototype.addFlavor = function (flavor, price) {
+  if (!flavor && typeof flavor !== "string") return -1;
+  if ((!price && isNaN(price)) || price < 1) return -1;
+  if (this.menu.filter((item) => item.flavor === flavor).length > 0) return -1;
+  this.menu.push({ flavor, price });
+  return this.menu.length;
+};
+LassiStand.prototype.takeOrder = function (customerName, flavor, quantity) {
+  if (!flavor || typeof flavor !== "string") return -1;
+  if (!quantity || isNaN(quantity) || !Number.isInteger(quantity)) return -1;
+  let flavorFilter = this.menu.filter((item) => item.flavor === flavor);
+  if (flavorFilter.length < 1) return -1;
+  let id = this._nextOrderId++;
+  this.orders.push({
+    id,
+    customer: customerName,
+    flavor,
+    quantity,
+    total: flavorFilter[0].price * quantity,
+    status: "pending",
+  });
+  return id;
+};
+LassiStand.prototype.completeOrder = function (orderId) {
+  if (!orderId || isNaN(orderId) || !Number.isInteger(orderId)) return false;
+  let filterOrder = this.orders.filter((order) => order.id === orderId);
+  if (filterOrder.length < 1) return false;
+  if (filterOrder[0].status === "completed") return false;
+  filterOrder[0].status = "completed";
+  return true;
+};
+LassiStand.prototype.getRevenue = function () {
+  let filterCompletedOrder = this.orders.filter(
+    (order) => order.status === "completed",
+  );
+  return filterCompletedOrder.reduce((sum, item) => sum + item.total, 0);
+};
 
-// Add prototype methods here:
-// LassiStand.prototype.addFlavor = function(flavor, price) { ... }
-// LassiStand.prototype.takeOrder = function(customerName, flavor, quantity) { ... }
-// LassiStand.prototype.completeOrder = function(orderId) { ... }
-// LassiStand.prototype.getRevenue = function() { ... }
-// LassiStand.prototype.getMenu = function() { ... }
+LassiStand.prototype.getMenu = function () {
+  return structuredClone(this.menu);
+};
 
 export function isLassiStand(obj) {
   // Your code here
+  return obj instanceof LassiStand;
 }
